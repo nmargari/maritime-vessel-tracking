@@ -6,7 +6,7 @@ using VesselApi.Models;
 namespace VesselApi.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/vessel")]
 public class VesselController : ControllerBase
 {
     private static readonly List<Vessel> _vessels = new()

@@ -1,0 +1,6 @@
+@VesselApi_HostAddress = http://localhost:5228
+
+GET {{VesselApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

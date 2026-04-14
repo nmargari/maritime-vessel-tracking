@@ -1,6 +1,6 @@
-using System.Data.Common;
-using System.Reflection.Metadata.Ecma335;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using VesselApi.Data;
 using VesselApi.Models;
 
 namespace VesselApi.Controllers;
@@ -9,25 +9,63 @@ namespace VesselApi.Controllers;
 [Route("api/vessel")]
 public class VesselController : ControllerBase
 {
-    private static readonly List<Vessel> _vessels = new()
+    private readonly MaritimeDbContext _context;
+    public VesselController(MaritimeDbContext context)
     {
-        new Vessel { Id = 1, Name = "Poseidon", MMSI = "123456789", 
-                     Latitude = 37.9838, Longitude = 23.7275, LastUpdated = DateTime.UtcNow }
-    };
+        _context = context;
+    }
 
     [HttpGet]
-    public ActionResult<IEnumerable<Vessel>> GetAll() => Ok(_vessels);
+    public async Task<ActionResult<IEnumerable<Vessel>>> GetAll() => Ok(await _context.Vessels.ToListAsync());
 
     [HttpGet("{id}")]
-    public ActionResult<Vessel> GetById(int id)
+    public async Task<ActionResult<Vessel>> GetById(int id)
     {
-        var vessel = _vessels.FirstOrDefault(v => v.Id == id);
+        var vessel = await _context.Vessels.FindAsync(id);
 
         if(vessel is null)
-        { 
+        {
             return NotFound();
         }
 
         return Ok(vessel);
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<Vessel>> Create(Vessel vessel)
+    {
+        _context.Vessels.Add(vessel);
+        await _context.SaveChangesAsync();
+        return CreatedAtAction(nameof(GetById), new { id = vessel.Id }, vessel);
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(int id, Vessel vessel)
+    {
+        if (id != vessel.Id)
+        {
+            return BadRequest();
+        }
+
+        _context.Entry(vessel).State = EntityState.Modified;
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var vessel = await _context.Vessels.FindAsync(id);
+
+        if(vessel is null)
+        {
+            return NotFound();
+        }
+
+        _context.Vessels.Remove(vessel);
+        await _context.SaveChangesAsync();
+
+        return NoContent();
     }
 }
